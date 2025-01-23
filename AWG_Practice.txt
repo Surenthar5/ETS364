@@ -1,0 +1,53 @@
+
+// Test Function: AWG_Practice
+ETS_PRGFLOW_FUNC AWG_Practice( int DSIndex, LPCTSTR TestLabel )
+{
+    //////////////////////////////////////
+    // Update test numbering information
+    SetTestNumber( TestNmbr[DSIndex] );
+    SetSubTestNumber( SubTestNmbr[DSIndex] );
+
+	RESULTS_STR AWG_Practice_Pin_Current_Result[1];	//Then here "0" Representing No Site. It is Result array of Structure used for storing current samples from APU . 
+     
+	//step 1: Configure tester to test 
+
+	//step 2: Configure hardware to Test 
+
+	// step 3 : Configure DUT to Test
+
+	// Step 4: Excite device to test
+
+	//Create and RUN AWG for Voltage signal
+	mcuset(MCU_MAIN, 50); // Setting Clock using MCU for AWG
+	mcumode(MCU_CH0, MCU_CLK, 50000, MCU_CLKA, MCU_TRIGNORMAL, 10.0);	// Dividing Clock
+	//Creating AWG samples
+	apuawgloader( AWG_Practice_Pin, "AWG1_Practice", APU_FV, APU_10V, APU_100MA, AWG1_Practice_Data, (sizeof(AWG1_Practice_Data)/sizeof(double)), &AWG1_Practice_Regions );
+	//Forcing Voltage waveform through APU_12 using AWG
+	apu12set(AWG_Practice_Pin, APU12_FVAWG, 0.0, APU12_10V, APU12_200MA, APU12_PIN_TO_VI);
+	apu12awgselect(AWG_Practice_Pin, "AWG1_Practice"); //Selecting which AWG we are going to use for previous apu12set
+	mcusequence(MCU_CH0, "AWG1_Practice_Sequence1", "20-ON" ,0);	//Sequencing no of samples which we want to use
+	mcuconnect( MCU_CH0, "AWG1_Practice_connect1_String", AWG_Practice_Pin ); //Connecting clock to related APU Pin
+	lwait(1000); 
+	mcurun("AWG1_Practice_Sequence1", MCU_NODIGITAL, 1);	//Run or generating above clock and send from Main Clock Unit to AWG Memory
+
+	//RUN and Getting Current Samples - Basically it is a Digitizer, APU will save current sample which is equivalent to no of samples APU forced to that particular pin
+	apu12adcmode(AWG_Practice_Pin, APU12_MI_1X, 1);	//Select when we interested in getting samples
+	blockread(AWG_Practice_Pin, 20);	//This comment only to read current samples 
+	namearray("AWG_Practice_Pin_Current", NAMEARRAY_APU12ADC, AWG_Practice_Pin, 1);	//To store the current samples in Array  
+	whereat("AWG_Practice_Pin_Current", 1, 20, 2);	//Perform Post Proceesing in resulted current sample to get value 2 is being found between sample 1 to 20.
+	groupgetresults(AWG_Practice_Pin_Current_Result, 1);	//Grouping Results which is measured w.r.t NUM_SITES
+
+	//step 5 : Make measurement on DUT
+
+	//Step 6: Bring DUT to default 
+
+	//step 7: Bring hardware to default
+
+	//step 8: Bring Tester to default
+
+	//step 9 : Perform all Calculations
+
+	//step 10 : Log Test Results , show us Test PASS/FAIL
+     
+    return( msSiteStat( MS_ALL ) ); // Return w/status
+} // END_ETS_PRGFLOW_FUNC
